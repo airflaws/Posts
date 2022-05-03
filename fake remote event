@@ -1,0 +1,81 @@
+local old = Instance.new
+Instance.new = function(className, parent)
+    if className == "RemoteEvent" then
+        local event = {}
+        local onserverFunctions = {}
+        local onserver = {}
+        function onserver:Connect(f)
+            table.insert(onserverFunctions, f)
+            local conn = {}
+            function conn:Disconnect()
+                table.remove(onserverFunctions, table.find(onserverFunctions, f))
+            end
+            return conn
+        end
+        function onserver:connect(f)
+            table.insert(onserverFunctions, f)
+            local conn = {}
+            function conn:Disconnect()
+                table.remove(onserverFunctions, table.find(onserverFunctions, f))
+            end
+            return conn
+        end
+        event.OnClientEvent = onclient
+        local onclientFunctions = {}
+        local onclient = {}
+        function onclient:Connect(f)
+            table.insert(onclientFunctions, f)
+            local conn = {}
+            function conn:Disconnect()
+                table.remove(onclientFunctions, table.find(onclientFunctions, f))
+            end
+            return conn
+        end
+        function onclient:connect(f)
+            table.insert(onclientFunctions, f)
+            local conn = {}
+            function conn:Disconnect()
+                table.remove(onclientFunctions, table.find(onclientFunctions, f))
+            end
+            return conn
+        end
+        event.OnClientEvent = onclient
+        local changed = {}
+        function changed:connect() end
+        function changed:Connect() end
+        event.Changed = changed
+        event.Parent = parent
+        event.Name = "RemoteEvent"
+        event.ClassName = className
+        function event:Destroy()
+            event.Parent = nil
+            onserverFunctions = {}
+            onclientFunctions = {}
+        end
+        function event:IsA(a)
+            return (a == className)
+        end
+        local lp = game:GetService("Players").LocalPlayer
+        function event:FireClient(a, ...)
+            if a ~= lp then
+                return
+            end
+            for i, v in pairs(onclientFunctions) do
+                v(...)
+            end
+        end
+        function event:FireAllClients(...)
+            for i, v in pairs(onclientFunctions) do
+                v(...)
+            end
+        end
+        function event:FireServer(...)
+            for i, v in pairs(onserverFunctions) do
+                v(lp, ...)
+            end
+        end
+        return event
+    else
+        return old(className, parent)
+    end
+end
